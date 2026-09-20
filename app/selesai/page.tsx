@@ -39,7 +39,7 @@ export default async function SelesaiPage() {
       <PageBackground />
       <LogoutButton />
 
-      <div className="relative z-10 grid w-full max-w-7xl gap-8 md:grid-cols-2 md:items-start">
+      <div className="relative z-10 grid w-full max-w-7xl grid-cols-1 gap-8 md:grid-cols-2 md:items-start">
         <HasilCard
           skor={lulusAttempt.skor}
           lulus={true}

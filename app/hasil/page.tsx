@@ -47,7 +47,7 @@ export default async function HasilPage() {
       <PageBackground />
       <LogoutButton />
 
-      <div className="relative z-10 grid w-full max-w-7xl gap-8 md:grid-cols-2 md:items-start">
+      <div className="relative z-10 grid w-full max-w-7xl grid-cols-1 gap-8 md:grid-cols-2 md:items-start">
         <HasilCard skor={last.skor} lulus={false} kkm={config.kkm} perSoal={perSoal} autoSubmit={last.auto_submit}>
           {deadlinePassed ? (
             <button
