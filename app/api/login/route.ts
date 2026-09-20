@@ -19,7 +19,7 @@ export async function POST(req: NextRequest) {
   // `peserta` table — maba only ever types their NRP to log in.
   const { data: peserta, error } = await db
     .from("peserta")
-    .select("nrp, nama, departemen")
+    .select("nrp, nama, departemen, is_admin")
     .eq("nrp", nrp)
     .maybeSingle();
 
@@ -35,7 +35,12 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: DATA_INCOMPLETE_ERROR }, { status: 403 });
   }
 
-  await setSessionCookie({ nrp: peserta.nrp, nama: peserta.nama, departemen: peserta.departemen });
+  await setSessionCookie({
+    nrp: peserta.nrp,
+    nama: peserta.nama,
+    departemen: peserta.departemen,
+    isAdmin: peserta.is_admin === true,
+  });
 
   return NextResponse.json({ ok: true });
 }

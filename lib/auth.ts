@@ -8,6 +8,7 @@ export type SessionPayload = {
   nrp: string;
   nama: string;
   departemen: string;
+  isAdmin: boolean;
 };
 
 function secretKey() {
@@ -32,7 +33,14 @@ async function verifySession(token: string): Promise<SessionPayload | null> {
       typeof payload.nama === "string" &&
       typeof payload.departemen === "string"
     ) {
-      return { nrp: payload.nrp, nama: payload.nama, departemen: payload.departemen };
+      // isAdmin didn't exist in sessions issued before this field was added —
+      // default to false instead of invalidating everyone's active session.
+      return {
+        nrp: payload.nrp,
+        nama: payload.nama,
+        departemen: payload.departemen,
+        isAdmin: payload.isAdmin === true,
+      };
     }
     return null;
   } catch {
