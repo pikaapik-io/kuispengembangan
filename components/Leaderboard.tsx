@@ -112,7 +112,9 @@ function LeaderboardListRow({ row, highlight }: { row: LeaderboardRow; highlight
         highlight ? "bg-amber-400/20 font-semibold text-amber-200" : "text-slate-100"
       }`}
     >
-      <span className="w-5 shrink-0 text-center text-xs text-slate-400 sm:w-7 sm:text-sm">{row.rank}</span>
+      <span className="min-w-[1.75rem] shrink-0 text-center text-xs text-slate-400 sm:min-w-[2.25rem] sm:text-sm">
+        {row.rank}
+      </span>
       <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-slate-700 text-xs font-bold text-white sm:h-10 sm:w-10 sm:text-sm">
         {initials(row.nama)}
       </span>
@@ -123,7 +125,7 @@ function LeaderboardListRow({ row, highlight }: { row: LeaderboardRow; highlight
         </span>
       </span>
       <span className="shrink-0 text-xs text-slate-400 sm:text-sm">{formatDurasi(row.durasiDetik)}</span>
-      <span className="w-8 shrink-0 text-right font-bold sm:w-10">{row.skor}</span>
+      <span className="min-w-[2.5rem] shrink-0 text-right font-bold sm:min-w-[3rem]">{row.skor}</span>
     </li>
   );
 }
