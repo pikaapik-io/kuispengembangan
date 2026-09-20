@@ -19,6 +19,7 @@ type AttemptRow = {
 export default async function MulaiPage() {
   const session = await getSession();
   if (!session) redirect("/");
+  if (session.isAdmin) redirect("/admin");
 
   const config = await getQuizConfig();
 

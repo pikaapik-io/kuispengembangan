@@ -24,7 +24,7 @@ export default function LoginForm() {
         setError(data.error ?? "Terjadi kesalahan, coba lagi.");
         return;
       }
-      router.push("/mulai");
+      router.push(data.isAdmin ? "/admin" : "/mulai");
     } catch {
       setError("Terjadi kesalahan, coba lagi.");
     } finally {

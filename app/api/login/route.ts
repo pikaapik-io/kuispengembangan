@@ -42,5 +42,5 @@ export async function POST(req: NextRequest) {
     isAdmin: peserta.is_admin === true,
   });
 
-  return NextResponse.json({ ok: true });
+  return NextResponse.json({ ok: true, isAdmin: peserta.is_admin === true });
 }

@@ -5,7 +5,7 @@ import PageBackground from "@/components/PageBackground";
 
 export default async function LoginPage() {
   const session = await getSession();
-  if (session) redirect("/mulai");
+  if (session) redirect(session.isAdmin ? "/admin" : "/mulai");
 
   return (
     <main className="relative flex flex-1 flex-col items-center justify-center overflow-hidden bg-slate-900 px-4 py-12">
