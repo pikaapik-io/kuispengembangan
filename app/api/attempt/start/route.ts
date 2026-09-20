@@ -51,7 +51,7 @@ export async function POST() {
     }
   }
 
-  const seed = Math.floor(Math.random() * 0xffffffff);
+  const seed = Math.floor(Math.random() * 0x7fffffff); // fits Postgres `int` (signed 32-bit)
   const { error: insertError } = await db.from("attempt").insert({
     nrp: session.nrp,
     attempt_ke: nextAttemptKe,

@@ -5,6 +5,8 @@ import { getQuizConfig } from "@/lib/config";
 import { db } from "@/lib/db";
 import StartButton from "@/components/StartButton";
 import CountdownButton from "@/components/CountdownButton";
+import PageBackground from "@/components/PageBackground";
+import LogoutButton from "@/components/LogoutButton";
 
 type AttemptRow = {
   attempt_ke: number;
@@ -35,21 +37,21 @@ export default async function MulaiPage() {
 
   let action: React.ReactNode;
 
+  const disabledButtonClass =
+    "cursor-not-allowed rounded-lg border-b-4 border-slate-500 bg-slate-400 px-8 py-3 text-lg font-bold uppercase tracking-wide text-slate-800";
+
   if (lulusAttempt) {
     action = (
-      <div className="flex flex-col items-center gap-3 rounded-xl border border-green-200 bg-green-50 p-6 text-center">
-        <p className="font-semibold text-green-800">Kamu sudah lulus.</p>
-        <Link
-          href="/selesai"
-          className="rounded-lg bg-green-600 px-8 py-3 text-base font-bold text-white transition hover:bg-green-700"
-        >
-          AMBIL LINK MATERI
+      <div className="flex flex-col items-center gap-4 rounded-xl border border-green-400/30 bg-green-500/10 p-8 text-center">
+        <p className="text-lg font-semibold text-green-300">Kamu sudah lulus.</p>
+        <Link href="/selesai" className="text-lg font-semibold text-white underline hover:text-slate-200">
+          Lihat hasil →
         </Link>
       </div>
     );
   } else if (!config.kuisDibuka) {
     action = (
-      <button disabled className="rounded-lg bg-gray-300 px-8 py-3 text-base font-bold text-gray-600">
+      <button disabled className={disabledButtonClass}>
         Kuis belum dibuka
       </button>
     );
@@ -60,7 +62,7 @@ export default async function MulaiPage() {
     action = windowOpen ? (
       <StartButton label="ATTEMPT QUIZ" />
     ) : (
-      <button disabled className="rounded-lg bg-gray-300 px-8 py-3 text-base font-bold text-gray-600">
+      <button disabled className={disabledButtonClass}>
         {config.windowMulaiTutup === null ? "Jadwal belum ditentukan" : "Waktu pengerjaan sudah ditutup"}
       </button>
     );
@@ -75,7 +77,7 @@ export default async function MulaiPage() {
       action = <CountdownButton label={`ATTEMPT #${nextAttemptKe}`} untilIso={cooldownEnds.toISOString()} />;
     } else if (deadlinePassed) {
       action = (
-        <button disabled className="rounded-lg bg-gray-300 px-8 py-3 text-base font-bold text-gray-600">
+        <button disabled className={disabledButtonClass}>
           Batas waktu pengerjaan sudah berakhir
         </button>
       );
@@ -85,23 +87,26 @@ export default async function MulaiPage() {
   }
 
   return (
-    <main className="flex flex-1 flex-col items-center justify-center gap-8 px-4 py-12 text-center">
-      <div>
-        <h1 className="text-3xl font-bold text-gray-900">Selamat mengerjakan, {session.nama}</h1>
-      </div>
+    <main className="relative flex flex-1 flex-col items-center justify-center overflow-hidden bg-slate-900 px-4 py-12">
+      <PageBackground />
+      <LogoutButton />
 
-      <div className="w-full max-w-sm rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
-        <p className="text-sm text-gray-700">
-          {config.jumlahSoal} soal · {Math.round(config.durasiDetik / 60)} menit · KKM {config.kkm} · pilihan ganda
-        </p>
-        <ul className="mt-3 space-y-1 text-left text-sm text-gray-500">
-          <li>Waktu berjalan begitu tombol ditekan, tidak bisa dijeda.</li>
-          <li>Jawaban tersimpan otomatis setiap kali dipilih.</li>
-          <li>Soal tetap sama setiap attempt.</li>
-        </ul>
-      </div>
+      <div className="relative z-10 flex w-full max-w-2xl flex-col items-center gap-8 rounded-2xl border border-white/10 bg-white/10 p-6 text-center shadow-2xl backdrop-blur-xl sm:p-10 lg:p-14">
+        <h1 className="text-3xl font-bold text-white sm:text-4xl">Selamat mengerjakan, {session.nama}</h1>
 
-      {action}
+        <div className="w-full rounded-xl border border-white/10 bg-white/5 p-6 sm:p-8">
+          <p className="text-base text-slate-100 sm:text-lg">
+            {config.jumlahSoal} soal · {Math.round(config.durasiDetik / 60)} menit · KKM {config.kkm} · pilihan ganda
+          </p>
+          <ul className="mt-4 space-y-2 text-left text-sm text-slate-300 sm:text-base">
+            <li>Waktu berjalan begitu tombol ditekan, tidak bisa dijeda.</li>
+            <li>Jawaban tersimpan otomatis setiap kali dipilih.</li>
+            <li>Soal tetap sama setiap attempt.</li>
+          </ul>
+        </div>
+
+        {action}
+      </div>
     </main>
   );
 }

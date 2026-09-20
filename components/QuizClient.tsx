@@ -2,6 +2,8 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
+import PageBackground from "@/components/PageBackground";
+import LogoutButton from "@/components/LogoutButton";
 
 type Opsi = { key: string; teks: string };
 type Soal = { id: number; topik: string; teks: string; opsi: Opsi[] };
@@ -147,14 +149,22 @@ export default function QuizClient() {
 
   if (loadError) {
     return (
-      <main className="flex flex-1 items-center justify-center p-6 text-center text-red-600">
-        {loadError}
+      <main className="relative flex flex-1 items-center justify-center overflow-hidden bg-slate-900 p-6 text-center">
+        <PageBackground />
+        <p className="relative z-10 rounded-xl border border-red-400/30 bg-red-500/10 px-6 py-4 text-red-200">
+          {loadError}
+        </p>
       </main>
     );
   }
 
   if (!soal) {
-    return <main className="flex flex-1 items-center justify-center p-6">Memuat kuis...</main>;
+    return (
+      <main className="relative flex flex-1 items-center justify-center overflow-hidden bg-slate-900 p-6">
+        <PageBackground />
+        <p className="relative z-10 text-white">Memuat kuis...</p>
+      </main>
+    );
   }
 
   const current = soal[currentIndex];
@@ -168,15 +178,15 @@ export default function QuizClient() {
   }
 
   const boxClasses: Record<string, string> = {
-    current: "ring-2 ring-blue-600 bg-white text-gray-900",
-    answered: "bg-blue-600 text-white border-blue-600",
-    ragu: "bg-yellow-100 text-yellow-800 border-yellow-400",
-    empty: "bg-white text-gray-500 border-gray-300",
+    current: "ring-2 ring-sky-400 bg-white/10 text-white border-transparent",
+    answered: "bg-sky-500 text-white border-sky-400",
+    ragu: "bg-amber-400 text-amber-950 border-amber-300",
+    empty: "bg-white/5 text-slate-300 border-white/15",
   };
 
   function NavigatorGrid({ onPick }: { onPick?: () => void }) {
     return (
-      <div className="grid grid-cols-5 gap-2">
+      <div className="grid grid-cols-5 gap-2.5">
         {soal!.map((s, i) => (
           <button
             key={s.id}
@@ -184,11 +194,11 @@ export default function QuizClient() {
               setCurrentIndex(i);
               onPick?.();
             }}
-            className={`relative h-10 rounded-md border text-sm font-semibold ${boxClasses[boxState(s.id)]}`}
+            className={`relative h-12 rounded-md border text-base font-semibold ${boxClasses[boxState(s.id)]}`}
           >
             {s.id}
             {raguSet.has(s.id) && (
-              <span className="absolute right-1 top-1 h-1.5 w-1.5 rounded-full bg-yellow-500" />
+              <span className="absolute right-1 top-1 h-1.5 w-1.5 rounded-full bg-amber-500" />
             )}
           </button>
         ))}
@@ -197,25 +207,36 @@ export default function QuizClient() {
   }
 
   return (
-    <main className="flex flex-1 flex-col">
+    <main className="relative flex flex-1 flex-col overflow-hidden bg-slate-900">
+      <PageBackground />
+
       <div
-        className={`sticky top-0 z-20 flex items-center justify-between border-b px-4 py-3 ${
-          isLowTime ? "bg-red-50" : "bg-white"
+        className={`sticky top-0 z-20 border-b border-white/10 px-4 py-4 backdrop-blur-xl ${
+          isLowTime ? "bg-red-950/60" : "bg-slate-900/70"
         }`}
       >
-        <span className="text-sm text-gray-500">Terjawab {answeredCount}/{soal.length}</span>
-        <span className={`text-xl font-bold tabular-nums ${isLowTime ? "text-red-600" : "text-gray-900"}`}>
-          {formatMMSS(remaining)}
-        </span>
+        <div className="mx-auto flex w-full max-w-6xl items-center justify-between">
+          <span className="text-base text-slate-300">
+            Terjawab {answeredCount}/{soal.length}
+          </span>
+          <div className="flex items-center gap-4">
+            <span className={`text-2xl font-bold tabular-nums ${isLowTime ? "text-red-300" : "text-white"}`}>
+              {formatMMSS(remaining)}
+            </span>
+            <LogoutButton inline />
+          </div>
+        </div>
       </div>
 
       {/* Mobile collapsible navigator bar */}
-      <div className="border-b bg-gray-50 px-4 py-2 lg:hidden">
+      <div className="relative z-10 border-b border-white/10 bg-white/5 px-4 py-2 backdrop-blur-xl lg:hidden">
         <button
           onClick={() => setNavigatorOpen((v) => !v)}
-          className="flex w-full items-center justify-between text-sm font-medium text-gray-700"
+          className="flex w-full items-center justify-between text-base font-medium text-slate-100"
         >
-          <span>Soal {current.id} dari {soal.length}</span>
+          <span>
+            Soal {current.id} dari {soal.length}
+          </span>
           <span>{navigatorOpen ? "Tutup ▲" : "Navigator ▼"}</span>
         </button>
         {navigatorOpen && (
@@ -225,22 +246,22 @@ export default function QuizClient() {
         )}
       </div>
 
-      <div className="flex flex-1 flex-col gap-6 p-4 lg:flex-row lg:p-6">
+      <div className="relative z-10 mx-auto flex w-full max-w-6xl flex-1 flex-col gap-6 p-4 lg:flex-row lg:p-6">
         <section className="flex-1 lg:w-[70%]">
-          <div className="rounded-xl border border-gray-200 bg-white p-5">
-            <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-gray-400">
+          <div className="rounded-2xl border border-white/10 bg-white/10 p-8 shadow-2xl backdrop-blur-xl">
+            <p className="mb-2 text-sm font-semibold uppercase tracking-wide text-amber-300">
               Soal {current.id} · {current.topik}
             </p>
-            <p className="mb-4 text-base font-medium text-gray-900">{current.teks}</p>
+            <p className="mb-6 text-xl font-medium text-white">{current.teks}</p>
 
-            <div className="space-y-2">
+            <div className="space-y-3">
               {current.opsi.map((opt) => (
                 <label
                   key={opt.key}
-                  className={`flex cursor-pointer items-center gap-3 rounded-lg border px-4 py-3 text-sm ${
+                  className={`flex cursor-pointer items-center gap-4 rounded-xl border px-6 py-4 text-lg transition ${
                     jawaban[current.id] === opt.key
-                      ? "border-blue-600 bg-blue-50"
-                      : "border-gray-200 hover:bg-gray-50"
+                      ? "border-sky-300 bg-sky-500 text-white shadow-lg"
+                      : "border-white/15 bg-white/5 text-slate-100 hover:bg-white/10"
                   }`}
                 >
                   <input
@@ -248,7 +269,7 @@ export default function QuizClient() {
                     name={`soal-${current.id}`}
                     checked={jawaban[current.id] === opt.key}
                     onChange={() => saveJawaban(current.id, opt.key)}
-                    className="h-4 w-4"
+                    className="h-5 w-5 accent-sky-400"
                   />
                   {opt.teks}
                 </label>
@@ -257,27 +278,27 @@ export default function QuizClient() {
 
             <button
               onClick={() => toggleRagu(current.id)}
-              className={`mt-4 rounded-full border px-4 py-1.5 text-xs font-semibold ${
+              className={`mt-6 rounded-full border px-5 py-2 text-sm font-semibold transition ${
                 raguSet.has(current.id)
-                  ? "border-yellow-400 bg-yellow-100 text-yellow-800"
-                  : "border-gray-300 text-gray-500"
+                  ? "border-amber-300 bg-amber-400 text-amber-950"
+                  : "border-white/20 text-slate-300 hover:bg-white/10"
               }`}
             >
               {raguSet.has(current.id) ? "✓ Ditandai ragu" : "Tandai ragu"}
             </button>
 
-            <div className="mt-6 flex justify-between">
+            <div className="mt-8 flex justify-between">
               <button
                 disabled={currentIndex === 0}
                 onClick={() => setCurrentIndex((i) => Math.max(0, i - 1))}
-                className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium disabled:opacity-40"
+                className="rounded-lg border border-white/20 px-5 py-2.5 text-base font-medium text-slate-100 transition hover:bg-white/10 disabled:opacity-30"
               >
                 ← Sebelumnya
               </button>
               <button
                 disabled={currentIndex === soal.length - 1}
                 onClick={() => setCurrentIndex((i) => Math.min(soal.length - 1, i + 1))}
-                className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium disabled:opacity-40"
+                className="rounded-lg border border-white/20 px-5 py-2.5 text-base font-medium text-slate-100 transition hover:bg-white/10 disabled:opacity-30"
               >
                 Berikutnya →
               </button>
@@ -287,18 +308,18 @@ export default function QuizClient() {
 
         {/* Desktop sticky navigator sidebar */}
         <aside className="hidden lg:block lg:w-[30%]">
-          <div className="sticky top-20 rounded-xl border border-gray-200 bg-white p-4">
-            <p className="mb-3 text-sm font-semibold text-gray-700">Navigator soal</p>
+          <div className="sticky top-24 rounded-2xl border border-white/10 bg-white/10 p-6 shadow-2xl backdrop-blur-xl">
+            <p className="mb-4 text-base font-semibold text-slate-100">Navigator soal</p>
             <NavigatorGrid />
           </div>
         </aside>
       </div>
 
-      <div className="sticky bottom-0 border-t bg-white p-4">
+      <div className="sticky bottom-0 z-20 flex justify-center px-4 pb-6 pt-4">
         <button
           onClick={() => handleSubmit(false)}
           disabled={submitting}
-          className="w-full rounded-lg bg-blue-600 py-3 text-base font-bold text-white disabled:opacity-50"
+          className="rounded-full border-b-4 border-sky-700 bg-sky-500 px-16 py-4 text-lg font-bold uppercase tracking-wide text-white shadow-2xl transition hover:bg-sky-400 active:translate-y-1 active:border-b-0 disabled:opacity-50"
         >
           {submitting ? "Mengirim..." : "Submit"}
         </button>

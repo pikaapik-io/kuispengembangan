@@ -31,11 +31,11 @@ export default function StartButton({ label }: { label: string }) {
       <button
         onClick={handleClick}
         disabled={loading}
-        className="rounded-lg bg-blue-600 px-8 py-3 text-base font-bold text-white transition hover:bg-blue-700 disabled:opacity-50"
+        className="rounded-lg border-b-4 border-slate-950 bg-slate-900 px-10 py-4 text-lg font-bold uppercase tracking-wide text-white transition hover:bg-slate-800 active:translate-y-1 active:border-b-0 disabled:opacity-50 disabled:active:translate-y-0 disabled:active:border-b-4"
       >
         {loading ? "Menyiapkan..." : label}
       </button>
-      {error && <p className="text-sm text-red-600">{error}</p>}
+      {error && <p className="text-sm text-red-300">{error}</p>}
     </div>
   );
 }

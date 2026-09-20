@@ -1,22 +1,23 @@
 import { redirect } from "next/navigation";
-import { db } from "@/lib/db";
 import { getSession } from "@/lib/auth";
 import LoginForm from "@/components/LoginForm";
+import PageBackground from "@/components/PageBackground";
 
 export default async function LoginPage() {
   const session = await getSession();
   if (session) redirect("/mulai");
 
-  const { data } = await db.from("peserta").select("departemen");
-  const departemenList = Array.from(new Set((data ?? []).map((d) => d.departemen))).sort();
-
   return (
-    <main className="flex flex-1 flex-col items-center justify-center gap-6 px-4 py-12">
-      <div className="text-center">
-        <h1 className="text-2xl font-bold text-gray-900">Kuis Temu FTEIC</h1>
-        <p className="mt-1 text-sm text-gray-500">Masuk dengan data pendaftaranmu untuk mulai.</p>
+    <main className="relative flex flex-1 flex-col items-center justify-center overflow-hidden bg-slate-900 px-4 py-12">
+      <PageBackground />
+
+      <div className="relative z-10 w-full max-w-xl rounded-2xl border border-white/10 bg-white/10 p-6 shadow-2xl backdrop-blur-xl sm:p-10 lg:p-14">
+        <div className="mb-6 text-center sm:mb-8">
+          <h1 className="text-3xl font-bold text-white sm:text-4xl">Login</h1>
+          <p className="mt-2 text-base text-slate-200/80 sm:text-lg">Kuis How To Win Friends</p>
+        </div>
+        <LoginForm />
       </div>
-      <LoginForm departemenList={departemenList} />
     </main>
   );
 }

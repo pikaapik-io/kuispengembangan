@@ -7,10 +7,6 @@ if (typeof window !== "undefined") {
 }
 
 let client: SupabaseClient | null = null;
-
-// Lazy so that `next build`'s page-data collection (which imports every
-// route module without calling anything) doesn't fail when env vars aren't
-// present yet — the error only fires once a request actually hits the DB.
 function getClient(): SupabaseClient {
   if (client) return client;
   const supabaseUrl = process.env.SUPABASE_URL;

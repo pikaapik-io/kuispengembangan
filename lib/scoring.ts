@@ -49,6 +49,20 @@ export function scoreAttempt(
   return { skor, lulus, benarCount, perSoal, topikBreakdown };
 }
 
+export type PerSoalResult = {
+  id: number;
+  topik: string;
+  benar: boolean;
+};
+
+export function perSoalFromBenar(
+  rows: { soal_id: number; benar: boolean | null }[],
+  soalList: SoalInternal[]
+): PerSoalResult[] {
+  const benarBySoal = new Map(rows.map((r) => [r.soal_id, Boolean(r.benar)]));
+  return soalList.map((s) => ({ id: s.id, topik: s.topik, benar: benarBySoal.get(s.id) ?? false }));
+}
+
 export function topikBreakdownFromBenar(
   rows: { soal_id: number; benar: boolean | null }[],
   soalList: SoalInternal[]

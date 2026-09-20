@@ -3,13 +3,13 @@
 
 create extension if not exists pgcrypto;
 
+-- nama & departemen are nullable: panitia pre-loads valid nrp (whitelist for
+-- login), then the maba's own nama & departemen are filled in / overwritten
+-- on login — see app/api/login/route.ts.
 create table peserta (
   nrp          text primary key,
-  nama         text not null,
-  departemen   text not null,
-  region       text,
-  kelompok     text,
-  mentor       text,
+  nama         text,
+  departemen   text,
   created_at   timestamptz default now()
 );
 

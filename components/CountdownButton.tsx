@@ -38,7 +38,7 @@ export default function CountdownButton({
   return (
     <button
       disabled
-      className="rounded-lg bg-gray-300 px-8 py-3 text-base font-bold text-gray-600"
+      className="cursor-not-allowed rounded-lg border-b-4 border-gray-400 bg-gray-300 px-10 py-4 text-lg font-bold uppercase tracking-wide text-gray-600"
     >
       {label} · {formatMMSS(remaining)}
     </button>

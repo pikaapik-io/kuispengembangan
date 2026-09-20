@@ -2,13 +2,13 @@
 -- Replace with real peserta + soal before the actual event.
 
 insert into peserta (nrp, nama, departemen) values
-  ('5025231001', 'Ahmad Fajar Ramadhan', 'Informatika'),
+  ('5025231001', 'Ahmad Fajar Ramadhan', 'Teknik Informatika'),
   ('5025231002', 'Siti Nur Aisyah', 'Sistem Informasi'),
   ('5025231003', 'Bagus Setiawan', 'Teknik Elektro'),
   ('5025231004', 'Dewi Puspita Sari', 'Teknik Komputer'),
   ('5025231005', 'Muhammad Rizky Pratama', 'Teknik Biomedik'),
   ('5025231006', 'Nadia Putri Anjani', 'Teknologi Informasi'),
-  ('5025231007', 'Rafi Aditya Nugroho', 'Informatika'),
+  ('5025231007', 'Rafi Aditya Nugroho', 'Teknik Informatika'),
   ('5025231008', 'Salsabila Zahra', 'Sistem Informasi'),
   ('5025231009', 'Yusuf Maulana', 'Teknik Elektro'),
   ('5025231010', 'Cindy Amelia', 'Teknik Komputer');
