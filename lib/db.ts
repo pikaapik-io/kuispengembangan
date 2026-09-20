@@ -37,3 +37,23 @@ export const db: SupabaseClient = new Proxy({} as SupabaseClient, {
     return Reflect.get(getClient(), prop, receiver);
   },
 });
+
+// Supabase's Data API caps any single response at 1000 rows regardless of
+// how many match — silently, with no error — so a table bigger than that
+// needs to be paged through with .range() to get everything.
+const PAGE_SIZE = 1000;
+
+export async function fetchAllRows<T>(
+  page: (from: number, to: number) => PromiseLike<{ data: T[] | null; error: { message: string } | null }>
+): Promise<T[]> {
+  const all: T[] = [];
+  let from = 0;
+  for (;;) {
+    const { data, error } = await page(from, from + PAGE_SIZE - 1);
+    if (error) throw error;
+    const rows = data ?? [];
+    all.push(...rows);
+    if (rows.length < PAGE_SIZE) return all;
+    from += PAGE_SIZE;
+  }
+}

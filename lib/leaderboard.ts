@@ -1,5 +1,5 @@
 import { unstable_cache } from "next/cache";
-import { db } from "./db";
+import { db, fetchAllRows } from "./db";
 
 export type LeaderboardRow = {
   rank: number;
@@ -33,14 +33,16 @@ function flattenPeserta(row: Row) {
 // (their own rank) runs on every request.
 const getSortedAttempts = unstable_cache(
   async (): Promise<Row[]> => {
-    const { data: rows, error } = await db
-      .from("attempt")
-      .select("nrp, attempt_ke, skor, durasi_detik, peserta(nama, departemen)")
-      .not("waktu_submit", "is", null);
-    if (error) throw error;
+    const rows = await fetchAllRows<Row>((from, to) =>
+      db
+        .from("attempt")
+        .select("nrp, attempt_ke, skor, durasi_detik, peserta(nama, departemen)")
+        .not("waktu_submit", "is", null)
+        .range(from, to)
+    );
 
     const latestByNrp = new Map<string, Row>();
-    for (const row of rows as Row[]) {
+    for (const row of rows) {
       const existing = latestByNrp.get(row.nrp);
       if (!existing || row.attempt_ke > existing.attempt_ke) {
         latestByNrp.set(row.nrp, row);

@@ -1,4 +1,4 @@
-import { db } from "./db";
+import { db, fetchAllRows } from "./db";
 
 export type AdminRow = {
   nrp: string;
@@ -18,22 +18,23 @@ type AttemptRow = { nrp: string; skor: number | null; lulus: boolean | null; wak
 // attempted, and their best score — queried live (no cache) since this is
 // low-traffic and panitia wants up-to-date numbers.
 export async function getAdminOverview(): Promise<AdminRow[]> {
-  const [{ data: pesertaRows, error: pesertaError }, { data: attemptRows, error: attemptError }] =
-    await Promise.all([
-      db.from("peserta").select("nrp, nama, departemen").eq("is_admin", false).order("nrp"),
-      db.from("attempt").select("nrp, skor, lulus, waktu_submit"),
-    ]);
-  if (pesertaError) throw pesertaError;
-  if (attemptError) throw attemptError;
+  const [pesertaRows, attemptRows] = await Promise.all([
+    fetchAllRows<PesertaRow>((from, to) =>
+      db.from("peserta").select("nrp, nama, departemen").eq("is_admin", false).order("nrp").range(from, to)
+    ),
+    fetchAllRows<AttemptRow>((from, to) =>
+      db.from("attempt").select("nrp, skor, lulus, waktu_submit").range(from, to)
+    ),
+  ]);
 
   const attemptsByNrp = new Map<string, AttemptRow[]>();
-  for (const row of (attemptRows ?? []) as AttemptRow[]) {
+  for (const row of attemptRows) {
     const list = attemptsByNrp.get(row.nrp) ?? [];
     list.push(row);
     attemptsByNrp.set(row.nrp, list);
   }
 
-  return (pesertaRows as PesertaRow[]).map((p) => {
+  return pesertaRows.map((p) => {
     const attempts = attemptsByNrp.get(p.nrp) ?? [];
     const submitted = attempts.filter((a) => a.waktu_submit !== null);
 
