@@ -44,7 +44,10 @@ export default function QuizClient() {
   useEffect(() => {
     let cancelled = false;
     fetch("/api/attempt/state")
-      .then((res) => res.json())
+      .then((res) => {
+        if (!res.ok) throw new Error("state fetch failed");
+        return res.json();
+      })
       .then((data: StateResponse) => {
         if (cancelled) return;
         if (data.status === "no_active_attempt") {

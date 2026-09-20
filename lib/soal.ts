@@ -1,3 +1,4 @@
+import { unstable_cache } from "next/cache";
 import { db } from "./db";
 
 export type Opsi = { key: string; teks: string };
@@ -17,16 +18,18 @@ export type SoalPublic = {
   opsi: Opsi[]; // shuffled per attempt seed, kunci stripped
 };
 
-// Static content — loaded once per warm lambda instance instead of per request.
-let cache: SoalInternal[] | null = null;
-
-export async function getAllSoal(): Promise<SoalInternal[]> {
-  if (cache) return cache;
-  const { data, error } = await db.from("soal").select("id, topik, teks, opsi, kunci").order("id");
-  if (error) throw error;
-  cache = data as SoalInternal[];
-  return cache;
-}
+// Static content — shared across all serverless instances via Next.js's Data
+// Cache, instead of a per-instance module cache (which doesn't help once
+// Vercel spins up many separate instances under load).
+export const getAllSoal = unstable_cache(
+  async (): Promise<SoalInternal[]> => {
+    const { data, error } = await db.from("soal").select("id, topik, teks, opsi, kunci").order("id");
+    if (error) throw error;
+    return data as SoalInternal[];
+  },
+  ["soal-all"],
+  { revalidate: 300 }
+);
 
 export async function getSoalById(id: number): Promise<SoalInternal | undefined> {
   const all = await getAllSoal();

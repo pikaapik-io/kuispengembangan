@@ -1,3 +1,4 @@
+import { unstable_cache } from "next/cache";
 import { db } from "./db";
 
 export type LeaderboardRow = {
@@ -25,25 +26,38 @@ function flattenPeserta(row: Row) {
 // Ranking is based on each participant's LATEST submitted attempt (not their
 // first) — a maba who fails attempt #1 but passes on a retry should show
 // their retry result, not the one they've since moved past.
-export async function getLeaderboard(nrp: string, nama: string, departemen: string) {
-  const { data: rows, error } = await db
-    .from("attempt")
-    .select("nrp, attempt_ke, skor, durasi_detik, peserta(nama, departemen)")
-    .not("waktu_submit", "is", null);
-  if (error) throw error;
+//
+// The DB query + ranking is shared across all viewers via Next.js's Data
+// Cache (unkeyed by viewer) so 1400 people refreshing /peringkat don't each
+// trigger their own full table scan + join — only per-viewer slicing below
+// (their own rank) runs on every request.
+const getSortedAttempts = unstable_cache(
+  async (): Promise<Row[]> => {
+    const { data: rows, error } = await db
+      .from("attempt")
+      .select("nrp, attempt_ke, skor, durasi_detik, peserta(nama, departemen)")
+      .not("waktu_submit", "is", null);
+    if (error) throw error;
 
-  const latestByNrp = new Map<string, Row>();
-  for (const row of rows as Row[]) {
-    const existing = latestByNrp.get(row.nrp);
-    if (!existing || row.attempt_ke > existing.attempt_ke) {
-      latestByNrp.set(row.nrp, row);
+    const latestByNrp = new Map<string, Row>();
+    for (const row of rows as Row[]) {
+      const existing = latestByNrp.get(row.nrp);
+      if (!existing || row.attempt_ke > existing.attempt_ke) {
+        latestByNrp.set(row.nrp, row);
+      }
     }
-  }
 
-  const sorted = Array.from(latestByNrp.values()).sort((a, b) => {
-    if (b.skor !== a.skor) return b.skor - a.skor;
-    return a.durasi_detik - b.durasi_detik;
-  });
+    return Array.from(latestByNrp.values()).sort((a, b) => {
+      if (b.skor !== a.skor) return b.skor - a.skor;
+      return a.durasi_detik - b.durasi_detik;
+    });
+  },
+  ["leaderboard-sorted"],
+  { revalidate: 20 }
+);
+
+export async function getLeaderboard(nrp: string, nama: string, departemen: string) {
+  const sorted = await getSortedAttempts();
 
   const top: LeaderboardRow[] = sorted.slice(0, 20).map((row, i) => ({
     rank: i + 1,

@@ -6,6 +6,17 @@ if (typeof window !== "undefined") {
   throw new Error("lib/db.ts must never be imported on the client");
 }
 
+// Without this, a slow/degraded Supabase leaves requests hanging until
+// Vercel's own function timeout (up to 300s) — tying up a serverless slot
+// for minutes per request instead of failing fast so the caller can retry.
+const FETCH_TIMEOUT_MS = 8_000;
+
+function fetchWithTimeout(input: RequestInfo | URL, init?: RequestInit): Promise<Response> {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS);
+  return fetch(input, { ...init, signal: controller.signal }).finally(() => clearTimeout(timeout));
+}
+
 let client: SupabaseClient | null = null;
 function getClient(): SupabaseClient {
   if (client) return client;
@@ -16,6 +27,7 @@ function getClient(): SupabaseClient {
   }
   client = createClient(supabaseUrl, supabaseServiceRoleKey, {
     auth: { persistSession: false, autoRefreshToken: false },
+    global: { fetch: fetchWithTimeout },
   });
   return client;
 }

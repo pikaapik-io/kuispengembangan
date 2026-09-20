@@ -1,23 +1,21 @@
+import { unstable_cache } from "next/cache";
 import { db } from "./db";
 
-const CACHE_TTL_MS = 30_000;
+// Shared across all serverless instances (Next.js Data Cache), not just the
+// warm one handling this request — under high concurrency, Vercel spins up
+// many isolated instances, so a per-instance cache barely cuts DB load.
+const loadConfig = unstable_cache(
+  async (): Promise<Record<string, string>> => {
+    const { data, error } = await db.from("config").select("key, value");
+    if (error) throw error;
 
-let cache: Record<string, string> | null = null;
-let cachedAt = 0;
-
-async function loadConfig(): Promise<Record<string, string>> {
-  const now = Date.now();
-  if (cache && now - cachedAt < CACHE_TTL_MS) return cache;
-
-  const { data, error } = await db.from("config").select("key, value");
-  if (error) throw error;
-
-  const next: Record<string, string> = {};
-  for (const row of data ?? []) next[row.key] = row.value;
-  cache = next;
-  cachedAt = now;
-  return next;
-}
+    const next: Record<string, string> = {};
+    for (const row of data ?? []) next[row.key] = row.value;
+    return next;
+  },
+  ["quiz-config"],
+  { revalidate: 30 }
+);
 
 function asNumber(value: string | undefined, fallback: number): number {
   if (value === undefined) return fallback;

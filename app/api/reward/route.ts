@@ -7,17 +7,23 @@ export async function GET() {
   const session = await getSession();
   if (!session) return NextResponse.json({ error: "Sesi tidak valid" }, { status: 401 });
 
-  const { data: lulusRow } = await db
-    .from("attempt")
-    .select("id")
-    .eq("nrp", session.nrp)
-    .eq("lulus", true)
-    .maybeSingle();
+  try {
+    const { data: lulusRow } = await db
+      .from("attempt")
+      .select("id")
+      .eq("nrp", session.nrp)
+      .eq("lulus", true)
+      .maybeSingle();
 
-  if (!lulusRow) {
-    return NextResponse.json({ error: "Kamu belum lulus" }, { status: 403 });
+    if (!lulusRow) {
+      return NextResponse.json({ error: "Kamu belum lulus" }, { status: 403 });
+    }
+
+    const config = await getQuizConfig();
+    return NextResponse.json({ link: config.linkReward });
+  } catch {
+    // Supabase unreachable/timed out (see lib/db.ts fetch timeout) — fail fast
+    // instead of hanging until Vercel's own function timeout.
+    return NextResponse.json({ error: "Server sedang sibuk, coba lagi." }, { status: 503 });
   }
-
-  const config = await getQuizConfig();
-  return NextResponse.json({ link: config.linkReward });
 }
