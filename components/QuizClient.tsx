@@ -27,6 +27,28 @@ function formatMMSS(totalSeconds: number): string {
   return `${m}:${r.toString().padStart(2, "0")}`;
 }
 
+// Answer/ragu saves are fire-and-forget from the caller's perspective, but a
+// silently dropped save means a student sees their pick as selected when it
+// never reached the server — so this retries transient failures before
+// giving up, instead of a bare `.catch(() => {})`.
+async function postAnswer(body: Record<string, unknown>): Promise<boolean> {
+  const retryDelaysMs = [0, 600, 1500];
+  for (const delay of retryDelaysMs) {
+    if (delay) await new Promise((resolve) => setTimeout(resolve, delay));
+    try {
+      const res = await fetch("/api/attempt/answer", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      });
+      if (res.ok) return true;
+    } catch {
+      // network error — fall through and retry
+    }
+  }
+  return false;
+}
+
 export default function QuizClient() {
   const router = useRouter();
   const [soal, setSoal] = useState<Soal[] | null>(null);
@@ -37,6 +59,7 @@ export default function QuizClient() {
   const [navigatorOpen, setNavigatorOpen] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [loadError, setLoadError] = useState<string | null>(null);
+  const [saveFailed, setSaveFailed] = useState<Set<number>>(new Set());
 
   const submittedRef = useRef(false);
   const debounceRef = useRef<Record<number, ReturnType<typeof setTimeout>>>({});
@@ -118,31 +141,35 @@ export default function QuizClient() {
     return () => clearInterval(id);
   }, [soal, handleSubmit]);
 
+  function markSaveResult(soalId: number, ok: boolean) {
+    setSaveFailed((prev) => {
+      const already = prev.has(soalId);
+      if (ok === already) return prev; // ok=true&&already=false, or ok=false&&already=true: no change
+      const next = new Set(prev);
+      if (ok) next.delete(soalId);
+      else next.add(soalId);
+      return next;
+    });
+  }
+
   function saveJawaban(soalId: number, value: string) {
     setJawaban((prev) => ({ ...prev, [soalId]: value }));
     if (debounceRef.current[soalId]) clearTimeout(debounceRef.current[soalId]);
-    debounceRef.current[soalId] = setTimeout(() => {
-      fetch("/api/attempt/answer", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ soal_id: soalId, jawaban: value }),
-      }).catch(() => {});
+    debounceRef.current[soalId] = setTimeout(async () => {
+      const ok = await postAnswer({ soal_id: soalId, jawaban: value });
+      markSaveResult(soalId, ok);
     }, 400);
   }
 
   function toggleRagu(soalId: number) {
+    const willBeRagu = !raguSet.has(soalId);
     setRaguSet((prev) => {
       const next = new Set(prev);
-      const willBeRagu = !next.has(soalId);
       if (willBeRagu) next.add(soalId);
       else next.delete(soalId);
-      fetch("/api/attempt/answer", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ soal_id: soalId, ragu: willBeRagu }),
-      }).catch(() => {});
       return next;
     });
+    postAnswer({ soal_id: soalId, ragu: willBeRagu }).then((ok) => markSaveResult(soalId, ok));
   }
 
   const answeredCount = useMemo(
@@ -202,6 +229,9 @@ export default function QuizClient() {
             {s.id}
             {raguSet.has(s.id) && (
               <span className="absolute right-1 top-1 h-1.5 w-1.5 rounded-full bg-amber-500" />
+            )}
+            {saveFailed.has(s.id) && (
+              <span className="absolute left-1 top-1 h-1.5 w-1.5 rounded-full bg-red-500" />
             )}
           </button>
         ))}
@@ -278,6 +308,12 @@ export default function QuizClient() {
                 </label>
               ))}
             </div>
+
+            {saveFailed.has(current.id) && (
+              <p className="mt-4 text-sm font-medium text-red-400">
+                Jawaban belum tersimpan, coba pilih ulang.
+              </p>
+            )}
 
             <button
               onClick={() => toggleRagu(current.id)}
